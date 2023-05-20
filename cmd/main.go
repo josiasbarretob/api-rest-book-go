@@ -116,6 +116,32 @@ func ListBook(w http.ResponseWriter, r *http.Request) {
 
 // Service
 func CreateBookService(infoBook InfoBook) (Book, error) {
+	book, err := CreateBookRepository(infoBook)
+	return book, err
+}
+
+func UpdateBookService(id string, infoBook InfoBook) (Book, error) {
+	book, err := UpdateBookRepository(id, infoBook)
+	return book, err
+}
+
+func DeleteBookService(id string) error {
+	err := DeleteBookRepository(id)
+	return err
+}
+
+func DescribeBookService(id string) (Book, error) {
+	book, err := DescribeBookRepository(id)
+	return book, err
+}
+
+func ListBookService() ([]Book, error) {
+	listBook, err := ListBookRepository()
+	return listBook, err
+}
+
+// Repository
+func CreateBookRepository(infoBook InfoBook) (Book, error) {
 	book := Book{
 		Id:            "01",
 		Nome:          infoBook.Nome,
@@ -126,7 +152,7 @@ func CreateBookService(infoBook InfoBook) (Book, error) {
 	return book, nil
 }
 
-func UpdateBookService(id string, infoBook InfoBook) (Book, error) {
+func UpdateBookRepository(id string, infoBook InfoBook) (Book, error) {
 	book := Book{
 		Id:            id,
 		Nome:          infoBook.Nome,
@@ -137,12 +163,12 @@ func UpdateBookService(id string, infoBook InfoBook) (Book, error) {
 	return book, nil
 }
 
-func DeleteBookService(id string) error {
+func DeleteBookRepository(id string) error {
 	fmt.Println("Livro deletado com sucesso", id)
 	return nil
 }
 
-func DescribeBookService(id string) (Book, error) {
+func DescribeBookRepository(id string) (Book, error) {
 	book := Book{
 		Id:            id,
 		Nome:          "O Diário de Anne Frank",
@@ -153,7 +179,7 @@ func DescribeBookService(id string) (Book, error) {
 	return book, nil
 }
 
-func ListBookService() ([]Book, error) {
+func ListBookRepository() ([]Book, error) {
 	listBook := []Book{
 		{
 			Id:            "01",
@@ -179,4 +205,3 @@ func ListBookService() ([]Book, error) {
 	}
 	return listBook, nil
 }
-
