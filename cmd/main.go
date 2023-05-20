@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -23,19 +25,19 @@ func main() {
 }
 
 // Domain
+type InfoBook struct {
+	Nome          string `json:"nome"`
+	Autor         string `json:"autor"`
+	Edicao        string `json:"edicao"`
+	AnoLancamento int    `json:"anoLancamento"`
+}
+
 type Book struct {
 	Id            string `json:"id"`
 	Nome          string `json:"nome"`
 	Autor         string `json:"autor"`
 	Edicao        string `json:"edicao"`
-	AnoLancamento int    `json:"ano lancamento"`
-}
-
-type InfoBook struct {
-	Nome          string `json:"nome"`
-	Autor         string `json:"autor"`
-	Edicao        string `json:"edicao"`
-	AnoLancamento int    `json:"ano lancamento"`
+	AnoLancamento int    `json:"anoLancamento"`
 }
 
 // Controller
@@ -44,15 +46,15 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&infoBook)
 	if err != nil {
 		log.Printf("Error ao Cadastrar livro %v", err)
-
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("json", "content-type")
-		return
 	}
 
 	book, err := CreateBookService(infoBook)
 	if err != nil {
 		log.Printf("Error ao criar livro")
+
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("json", "content-type")
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -74,6 +76,9 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	book, err := UpdateBookService(id, infoBook)
 	if err != nil {
 		log.Printf("Error ao atualizar livro")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(book)
@@ -85,6 +90,9 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	err := DeleteBookService(id)
 	if err != nil {
 		log.Printf("Error ao deletar livro")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -97,6 +105,9 @@ func DescribeBook(w http.ResponseWriter, r *http.Request) {
 	book, err := DescribeBookService(id)
 	if err != nil {
 		log.Printf("Error ao descrever o livro")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(book)
@@ -108,6 +119,9 @@ func ListBook(w http.ResponseWriter, r *http.Request) {
 	listBook, err := ListBookService()
 	if err != nil {
 		log.Print("Error ao listar livros")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(listBook)
@@ -115,12 +129,12 @@ func ListBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // Service
-func CreateBookService(infoBook InfoBook) (Book, error) {
+func CreateBookService(infoBook InfoBook) (*Book, error) {
 	book, err := CreateBookRepository(infoBook)
 	return book, err
 }
 
-func UpdateBookService(id string, infoBook InfoBook) (Book, error) {
+func UpdateBookService(id string, infoBook InfoBook) (*Book, error) {
 	book, err := UpdateBookRepository(id, infoBook)
 	return book, err
 }
@@ -141,18 +155,15 @@ func ListBookService() ([]Book, error) {
 }
 
 // Repository
-func CreateBookRepository(infoBook InfoBook) (Book, error) {
-	book := Book{
-		Id:            "01",
-		Nome:          infoBook.Nome,
-		Autor:         infoBook.Autor,
-		Edicao:        infoBook.Edicao,
-		AnoLancamento: infoBook.AnoLancamento,
-	}
-	return book, nil
-}
+var bookMap = make(map[string]Book)
 
-func UpdateBookRepository(id string, infoBook InfoBook) (Book, error) {
+func CreateBookRepository(infoBook InfoBook) (*Book, error) {
+	numberRandon := rand.Intn(10)
+	id := strconv.Itoa(numberRandon)
+	if _, ok := bookMap[id]; ok {
+		return nil, fmt.Errorf("livro já existe")
+	}
+
 	book := Book{
 		Id:            id,
 		Nome:          infoBook.Nome,
@@ -160,48 +171,50 @@ func UpdateBookRepository(id string, infoBook InfoBook) (Book, error) {
 		Edicao:        infoBook.Edicao,
 		AnoLancamento: infoBook.AnoLancamento,
 	}
-	return book, nil
+
+	bookMap[id] = book
+	return &book, nil
+}
+
+func UpdateBookRepository(id string, infoBook InfoBook) (*Book, error) {
+	if _, ok := bookMap[id]; ok {
+		book := Book{
+			Id:            id,
+			Nome:          infoBook.Nome,
+			Autor:         infoBook.Autor,
+			Edicao:        infoBook.Edicao,
+			AnoLancamento: infoBook.AnoLancamento,
+		}
+		bookMap[id] = book
+		return &book, nil
+	}
+	return nil, fmt.Errorf("ID não encontrado")
 }
 
 func DeleteBookRepository(id string) error {
-	fmt.Println("Livro deletado com sucesso", id)
-	return nil
+	if _, ok := bookMap[id]; ok {
+		delete(bookMap, id)
+		return nil
+	}
+	return fmt.Errorf("ID não encontrado")
 }
 
 func DescribeBookRepository(id string) (Book, error) {
-	book := Book{
-		Id:            id,
-		Nome:          "O Diário de Anne Frank",
-		Autor:         "JJ",
-		Edicao:        "1990.3",
-		AnoLancamento: 2000,
+	if _, ok := bookMap[id]; ok {
+		return bookMap[id], nil
 	}
-	return book, nil
+	return bookMap[id], fmt.Errorf("ID não encontrado")
 }
 
 func ListBookRepository() ([]Book, error) {
-	listBook := []Book{
-		{
-			Id:            "01",
-			Nome:          "A Culpa é das Estrelas",
-			Autor:         "John Green",
-			Edicao:        "2014.3",
-			AnoLancamento: 2014,
-		},
-		{
-			Id:            "02",
-			Nome:          "O Diário de Anne Frank",
-			Autor:         "Ane Frank",
-			Edicao:        "1995.3",
-			AnoLancamento: 1995,
-		},
-		{
-			Id:            "03",
-			Nome:          "O Código Da Vinci (Robert Langdon)",
-			Autor:         "Dan Brown",
-			Edicao:        "2000-1",
-			AnoLancamento: 2003,
-		},
-	}
+	listBook := convertMapToSlice(bookMap)
 	return listBook, nil
+}
+
+func convertMapToSlice(m map[string]Book) []Book {
+	var listBook []Book
+	for _, v := range m {
+		listBook = append(listBook, v)
+	}
+	return listBook
 }
