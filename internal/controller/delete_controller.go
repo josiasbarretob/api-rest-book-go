@@ -8,9 +8,17 @@ import (
 	"github.com/mercadolibre/api-rest-book-golang/api-rest-book-go/internal/service"
 )
 
-func DeleteBook(w http.ResponseWriter, r *http.Request) {
+type deleteBookController struct {
+	deleteService service.DeleteServiceInterface
+}
+
+func NewDeleteBookController(deleteService service.DeleteServiceInterface) *deleteBookController {
+	return &deleteBookController{deleteService}
+}
+
+func (d deleteBookController) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	err := service.DeleteBookService(id)
+	err := d.deleteService.DeleteBookService(id)
 	if err != nil {
 		log.Printf("Error ao deletar livro")
 
@@ -21,4 +29,3 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
-

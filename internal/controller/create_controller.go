@@ -9,15 +9,24 @@ import (
 	"github.com/mercadolibre/api-rest-book-golang/api-rest-book-go/internal/service"
 )
 
-// Controller
-func CreateBook(w http.ResponseWriter, r *http.Request) {
+type createBookController struct{
+	createService service.CreateServiceInterface
+}
+
+func NewCreateBookController(createService service.CreateServiceInterface)*createBookController{
+	return &createBookController{
+		createService: createService,
+	}
+}
+
+func (c createBookController) CreateBook(w http.ResponseWriter, r *http.Request) {
 	infoBook := domain.InfoBook{}
 	err := json.NewDecoder(r.Body).Decode(&infoBook)
 	if err != nil {
 		log.Printf("Error ao Cadastrar livro %v", err)
 	}
 
-	book, err := service.CreateBookService(infoBook)
+	book, err := c.createService.CreateBookService(infoBook)
 	if err != nil {
 		log.Printf("Error ao criar livro")
 

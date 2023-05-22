@@ -9,10 +9,20 @@ import (
 	"github.com/mercadolibre/api-rest-book-golang/api-rest-book-go/internal/service"
 )
 
-func DescribeBook(w http.ResponseWriter, r *http.Request) {
+type describeBookController struct{
+	describeService service.DescribeServiceInterface
+}
+
+func NewDescribeBookController(describeService service.DescribeServiceInterface)*describeBookController{
+	return &describeBookController{
+		describeService: describeService,
+	}
+}
+
+func (d describeBookController)DescribeBook(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	book, err := service.DescribeBookService(id)
+	book, err := d.describeService.DescribeBookService(id)
 	if err != nil {
 		log.Printf("Error ao descrever o livro")
 
