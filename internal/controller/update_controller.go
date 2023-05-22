@@ -10,7 +10,15 @@ import (
 	"github.com/mercadolibre/api-rest-book-golang/api-rest-book-go/internal/service"
 )
 
-func UpdateBook(w http.ResponseWriter, r *http.Request) {
+type updateBookController struct {
+	updateService service.UpdateServiceInterface
+}
+
+func NewUpdateBookController(updateService service.UpdateServiceInterface)*updateBookController{
+	return &updateBookController{updateService: updateService}
+}
+
+func (u updateBookController) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	infoBook := domain.InfoBook{}
 	id := chi.URLParam(r, "id")
 	err := json.NewDecoder(r.Body).Decode(&infoBook)
@@ -21,7 +29,7 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("json", "content-type")
 		return
 	}
-	book, err := service.UpdateBookService(id, infoBook)
+	book, err := u.updateService.UpdateBookService(id, infoBook)
 	if err != nil {
 		log.Printf("Error ao atualizar livro")
 
@@ -32,4 +40,3 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(book)
 	w.WriteHeader(http.StatusOK)
 }
-

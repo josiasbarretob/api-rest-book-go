@@ -8,9 +8,18 @@ import (
 	"github.com/mercadolibre/api-rest-book-golang/api-rest-book-go/internal/service"
 )
 
-func ListBook(w http.ResponseWriter, r *http.Request) {
+type listBookController struct {
+	listService service.ListServiceInterface
+}
 
-	listBook, err := service.ListBookService()
+func NewListBookController(listService service.ListServiceInterface)*listBookController{
+	return &listBookController{
+		listService: listService,
+	}
+}
+func (l listBookController) ListBook(w http.ResponseWriter, r *http.Request) {
+
+	listBook, err := l.listService.ListBookService()
 	if err != nil {
 		log.Print("Error ao listar livros")
 
